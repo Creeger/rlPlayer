@@ -13,7 +13,7 @@ static Vector2 progButPos = { 10, screenHeight - 15 };
 static const int fontSize = 5;
 
 
-static void DrawWindow(float timePlayed, float totLength);
+static void DrawWindow(float timePlayed, float totLength, float played);
 
 
 int main(void) {
@@ -28,7 +28,6 @@ int main(void) {
     PlayMusicStream(music);
 
     float timePlayed = 0.0f;
-
     float volume = 0.8f;
     SetMusicVolume(music, volume);
     
@@ -36,15 +35,14 @@ int main(void) {
     while (!WindowShouldClose()) {
         UpdateMusicStream(music);
 
-    if (IsKeyPressed(KEY_R)) {
-        StopMusicStream(music);
-        PlayMusicStream(music);
-        pause = false;
-    }
-    
+        if (IsKeyPressed(KEY_R)) {
+            StopMusicStream(music);
+            PlayMusicStream(music);
+            pause = false;
+        }
+        
        if (IsKeyPressed(KEY_P)) {
             pause = !pause;
-
             if (pause) {
                 PauseMusicStream(music);
             } else {
@@ -52,15 +50,28 @@ int main(void) {
             } 
         }
         
-        
-        float played = GetMusicTimePlayed(music) / 60;
-        float totLength = GetMusicTimeLength(music) / 60;
+        float played = GetMusicTimePlayed(music);
+        float totLength = GetMusicTimeLength(music);
         timePlayed = played / totLength; 
         if (timePlayed > 1.0f) timePlayed = 1.0f;
 
-
-        DrawWindow(timePlayed, totLength);
+        // Skip backwards or forwards in song
+        if (IsKeyPressed(KEY_RIGHT)) {
+            SeekMusicStream(music, played + 5.0f);
         }
+        if (IsKeyPressed(KEY_LEFT)) {
+            SeekMusicStream(music, played - 5.0f);
+        }
+        if (IsKeyPressed(KEY_RIGHT) && IsKeyPressed(KEY_RIGHT_SHIFT)) {
+            SeekMusicStream(music, played + 10.0f);
+        }
+        if (IsKeyPressed(KEY_RIGHT) && IsKeyPressed(KEY_RIGHT_SHIFT)) {
+            SeekMusicStream(music, played - 10.0f);
+        }
+
+
+        DrawWindow(timePlayed, totLength / 60, played / 60);
+    }
     UnloadMusicStream(music);
     CloseAudioDevice();
     CloseWindow();
@@ -69,11 +80,11 @@ int main(void) {
 }
 
 
-void DrawWindow(float timePlayed, float totLength) {
+void DrawWindow(float timePlayed, float totLength, float played) {
     BeginDrawing();
         ClearBackground(RAYWHITE);
         char time[128];
-        sprintf(time, "Duration:  %0.2f:%0.2f\n", timePlayed, totLength);
+        sprintf(time, "Duration:  %0.2f:%0.2f\n", played, totLength);
         if (pause) {
             DrawCircle( buttonCenter.x, buttonCenter.y, pauseButtonRadius, RED);
             DrawRectangle(buttonCenter.x + 5, buttonCenter.y - 20 , 10, 40, WHITE);
@@ -92,10 +103,10 @@ void DrawWindow(float timePlayed, float totLength) {
                 (Vector2){ buttonCenter.x + triangleSize, buttonCenter.y }, 
                 BLACK
             );
-
+            float barWidth = screenWidth - 30;
             // Progress bar
-            DrawRectangle(15, buttonCenter.y - 50, screenWidth - 30, 5, GREEN);
-            DrawCircle( 15 + (timePlayed * 400.0f), buttonCenter.y - 47, 4, BLACK);
+            DrawRectangle(15, buttonCenter.y - 50, barWidth, 5, GREEN);
+            DrawCircle( 15 + (timePlayed * barWidth), buttonCenter.y - 47, 4, BLACK);
             
         }
         DrawText(time, screenWidth - 15 - MeasureText(time, fontSize), buttonCenter.y - 40, fontSize, BLACK);
