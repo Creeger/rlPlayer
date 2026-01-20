@@ -50,27 +50,30 @@ int main(void) {
             } 
         }
         
-        float played = GetMusicTimePlayed(music);
-        float totLength = GetMusicTimeLength(music);
-        timePlayed = played / totLength; 
-        if (timePlayed > 1.0f) timePlayed = 1.0f;
+        float playedSec = GetMusicTimePlayed(music);
+        float totLengthSec = GetMusicTimeLength(music);
+        timePlayed = playedSec / totLengthSec; 
+        if (timePlayed > 1.0f) {
+            timePlayed = 1.0f;
+            StopMusicStream(music);
+        }
 
         // Skip backwards or forwards in song
         if (IsKeyPressed(KEY_RIGHT)) {
-            SeekMusicStream(music, played + 5.0f);
+            SeekMusicStream(music, playedSec + 5.0f);
         }
         if (IsKeyPressed(KEY_LEFT)) {
-            SeekMusicStream(music, played - 5.0f);
+            SeekMusicStream(music, playedSec - 5.0f);
         }
         if (IsKeyPressed(KEY_RIGHT) && IsKeyPressed(KEY_RIGHT_SHIFT)) {
-            SeekMusicStream(music, played + 10.0f);
+            SeekMusicStream(music, playedSec + 10.0f);
         }
         if (IsKeyPressed(KEY_RIGHT) && IsKeyPressed(KEY_RIGHT_SHIFT)) {
-            SeekMusicStream(music, played - 10.0f);
+            SeekMusicStream(music, playedSec - 10.0f);
         }
 
 
-        DrawWindow(timePlayed, totLength / 60, played / 60);
+        DrawWindow(timePlayed, totLengthSec, playedSec);
     }
     UnloadMusicStream(music);
     CloseAudioDevice();
@@ -80,12 +83,10 @@ int main(void) {
 }
 
 
-void DrawWindow(float timePlayed, float totLength, float played) {
+void DrawWindow(float timePlayed, float totLengthSec, float playedSec) {
     BeginDrawing();
         ClearBackground(RAYWHITE);
-        char time[128];
-        sprintf(time, "Duration:  %0.2f:%0.2f\n", played, totLength);
-        if (pause) {
+                if (pause) {
             DrawCircle( buttonCenter.x, buttonCenter.y, pauseButtonRadius, RED);
             DrawRectangle(buttonCenter.x + 5, buttonCenter.y - 20 , 10, 40, WHITE);
             DrawRectangle(buttonCenter.x - 15, buttonCenter.y - 20, 10, 40, WHITE);
@@ -109,6 +110,14 @@ void DrawWindow(float timePlayed, float totLength, float played) {
             DrawCircle( 15 + (timePlayed * barWidth), buttonCenter.y - 47, 4, BLACK);
             
         }
+
+        char time[128];
+        int playedMin = playedSec / 60;
+        int playedRem = (int)playedSec % 60;
+
+        int totalMin = totLengthSec / 60;
+        int totalRem = (int)totLengthSec % 60;
+        sprintf(time, "%02d:%02d / %02d:%02d\n", playedMin, playedRem, totalMin, totalRem);
         DrawText(time, screenWidth - 15 - MeasureText(time, fontSize), buttonCenter.y - 40, fontSize, BLACK);
 
         EndDrawing();
