@@ -17,7 +17,7 @@ static const int fontSize = 5;
 Music music = (Music){0};
 float volume = 1.0f;
 
-static void DrawWindow(float timePlayed, float totLength, float played);
+static void DrawWindow(float timePlayed, float totLength, float played, struct playListNode currentSong);
 static struct playListList *lookUpSongs(const char* musicPath);
 static void playSong(struct playListNode *currentSong);
 
@@ -96,7 +96,7 @@ int main(void) {
             pause = false;
             playSong(currentSong);
         }
-        DrawWindow(timePlayed, totLengthSec, playedSec);
+        DrawWindow(timePlayed, totLengthSec, playedSec, *currentSong);
     }
     UnloadMusicStream(music);
     CloseAudioDevice();
@@ -106,10 +106,8 @@ int main(void) {
 }
 
 
-void DrawWindow(float timePlayed, float totLengthSec, float playedSec) {
+void DrawWindow(float timePlayed, float totLengthSec, float playedSec, struct playListNode currentSong) {
     float barWidth = screenWidth - 30;
-    char songPath[256];
-    snprintf(songPath, sizeof(songPath), "%s%s", musicPath, songName);
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
@@ -144,6 +142,14 @@ void DrawWindow(float timePlayed, float totLengthSec, float playedSec) {
     int totalRem = (int)totLengthSec % 60;
     sprintf(time, "%02d:%02d / %02d:%02d\n", playedMin, playedRem, totalMin, totalRem);
     DrawText(time, screenWidth - 15 - MeasureText(time, fontSize), buttonCenter.y - 40, fontSize, BLACK);
+
+    int tempFontSize = fontSize;
+    while(MeasureText(currentSong.songName, fontSize) > barWidth && fontSize > 5) {
+        tempFontSize--;
+    }
+
+    int songTitleLen = MeasureText(currentSong.songName, tempFontSize);
+    DrawText(currentSong.songName, (screenWidth - songTitleLen)/2, screenHeight/2, fontSize, BLACK); 
 
     EndDrawing();
 }
